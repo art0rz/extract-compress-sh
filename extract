@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# extract.sh — Extract various archive formats
+# Usage: extract.sh <archive> [destination]
+
+set -euo pipefail
+
+archive="${1:-}"
+dest="${2:-.}"
+
+if [[ -z "$archive" ]]; then
+  echo "Usage: $0 <archive> [destination]" >&2
+  exit 1
+fi
+
+if [[ ! -f "$archive" ]]; then
+  echo "Error: file not found — $archive" >&2
+  exit 1
+fi
+
+mkdir -p "$dest"
+
+case "$archive" in
+  *.tar.bz2)   tar xjf "$archive" -C "$dest" ;;
+  *.tar.gz)    tar xzf "$archive" -C "$dest" ;;
+  *.tar.xz)    tar xJf "$archive" -C "$dest" ;;
+  *.tar.zst)   tar --use-compress-program=unzstd -xf "$archive" -C "$dest" ;;
+  *.tar.lz)    tar --lzip -xf "$archive" -C "$dest" ;;
+  *.tar)       tar xf "$archive" -C "$dest" ;;
+  *.tbz2)      tar xjf "$archive" -C "$dest" ;;
+  *.tgz)       tar xzf "$archive" -C "$dest" ;;
+  *.txz)       tar xJf "$archive" -C "$dest" ;;
+  *.zip)       unzip -q "$archive" -d "$dest" ;;
+  *.rar)       unrar x -idq "$archive" "$dest" ;;
+  *.7z)        7z x "$archive" -o"$dest" >/dev/null ;;
+  *.gz)        gunzip -c "$archive" > "$dest/$(basename "${archive%.gz}")" ;;
+  *.bz2)       bunzip2 -c "$archive" > "$dest/$(basename "${archive%.bz2}")" ;;
+  *.xz)        unxz -c "$archive" > "$dest/$(basename "${archive%.xz}")" ;;
+  *.zst)       unzstd -c "$archive" > "$dest/$(basename "${archive%.zst}")" ;;
+  *)           echo "Error: unsupported format: $archive" >&2; exit 1 ;;
+esac

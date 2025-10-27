@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# compress.sh — Compress files/directories with standard tools
+# Usage: compress.sh <source> [output.{tar.gz|.zip|.7z|.tar.xz}]
+
+set -euo pipefail
+
+src="${1:-}"
+dest="${2:-}"
+
+if [[ -z "$src" ]]; then
+  echo "Usage: $0 <source> [output]" >&2
+  exit 1
+fi
+
+if [[ ! -e "$src" ]]; then
+  echo "Error: source not found — $src" >&2
+  exit 1
+fi
+
+# Auto-detect destination and format if not given
+if [[ -z "$dest" ]]; then
+  base="$(basename "$src")"
+  if [[ -d "$src" ]]; then
+    dest="${base%/}.tar.gz"
+  else
+    dest="${base%.*}.zip"
+  fi
+fi
+
+case "$dest" in
+  *.tar.gz)  tar czf "$dest" "$src" ;;
+  *.tar.xz)  tar cJf "$dest" "$src" ;;
+  *.tar.bz2) tar cjf "$dest" "$src" ;;
+  *.zip)     zip -rq "$dest" "$src" ;;
+  *.7z)      7z a -mx=9 "$dest" "$src" >/dev/null ;;
+  *)
+    echo "Error: unsupported format — must end with .tar.gz, .tar.xz, .tar.bz2, .zip, or .7z" >&2
+    exit 1
+    ;;
+esac
+
+echo "Created: $dest"
